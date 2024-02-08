@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
       required:true,
       validate(pass){
         if(pass.length<8){
-          throw new Error("Password should have the length greater than or equal to 8");
+          throw new Error('password should be at least 8 characters long');
         }
       }
     }

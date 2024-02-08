@@ -22,22 +22,21 @@ const decodeToken = (req, res, next) => {
 // Function for user signup
 const signup = async (req, res, next) => {
   try {
-    // Extract user data from the request body (e.g., username, email, password)
-    // Create a new user instance using the User model
-    // Save the user to the database
-    // Handle success and send a success response with user data
-    // Handle errors and send an error response
-    const {username, email, password} = req.body;
-    if(!username || !email || !password)
-    {
-      res.status(400).json({ message: "Please provide all required information", status: "Error" })
-    }
-    const creatUser = await User.create({username, email, password}); 
-      
-    return res.status(201).json({ message: "User created successfully",
-    status:"success",
-    data: {creatUser}
-  })
+    const { username, email, password } = req.body;
+    const user = new User({
+      username,
+      email,
+      password,
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      status: 'success',
+      data: {
+        user,
+      },
+    });
   } catch (err) {
     res.status(500).json({
       status: 'error',
@@ -47,32 +46,44 @@ const signup = async (req, res, next) => {
   }
 };
 
-// Function for user login
 const login = async (req, res, next) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      message: 'Please provide email and password',
+      status: 'Error',
+    });
+  }
+
   try {
-    // Extract user credentials from the request body (e.g., email, password)
-    const {email, password} = req.body;
-    // Check if both email and password are provided; if not, send an error response
-    if(!email || !password){
-      return res.status(400).json({
-        status:"error",
-        message:"Please provide email and password"
-      })
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({
+        message: 'Invalid email or password',
+        status: 'Error',
+        error: 'Invalid Credentials',
+      });
     }
-    const user = await User.findOne({email});
-    if(!user){
-      return res.status(401).json(
-        { message: "Invalid email or password", status: "Error", error: "Invalid Credentials" }
-      )
+
+    const passwordMatches = await bcrypt.compare(password, user.password);
+    if (!passwordMatches) {
+      return res.status(401).json({
+        message: 'Invalid email or password',
+        status: 'Error',
+        error: 'Invalid Credentials',
+      });
     }
-    const jwtToken = jwt.sign({userId:user._id,username:user.username,email:user.email},JWT_SECRET ,{expiresIn:'1h'})
-    res.status(200).json({token:jwtToken, status:'Success'})
-    // Find the user in the database by their email
-    // If the user is not found, send an error response
-    // Compare the provided password with the stored password using bcrypt
-    // If passwords do not match, send an error response
-    // If passwords match, generate a JWT token with user information
-    // Send the token in the response
+
+    const token = jwt.sign(
+      { userId: user._id, username: user.username, email: user.email },
+      JWT_SECRET,
+      {
+        expiresIn: '1h',
+      }
+    );
+
+    res.status(200).json({ token, status: 'Success' });
   } catch (err) {
     res.status(500).json({
       status: 'error',
