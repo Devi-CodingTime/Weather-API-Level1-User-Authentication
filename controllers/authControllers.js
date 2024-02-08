@@ -32,8 +32,8 @@ const signup = async (req, res, next) => {
     {
       res.status(400).json({ message: "Please provide all required information", status: "Error" })
     }
-    const creatUser = new User({username, email, password}); // only creates the user locally , it doesn't save to db
-      await User.save(); // call pre-save hook and then save data to the db
+    const creatUser = await User.create({username, email, password}); 
+      
     return res.status(201).json({ message: "User created successfully",
     status:"success",
     data: {creatUser}
