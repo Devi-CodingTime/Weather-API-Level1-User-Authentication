@@ -65,7 +65,7 @@ const login = async (req, res, next) => {
         { message: "Invalid email or password", status: "Error", error: "Invalid Credentials" }
       )
     }
-    const jwtToken = jwt.sign({userId:user._id,username:user.username,email:user.email},JWT_SECRET,{expiresIn:'1h'})
+    const jwtToken = jwt.sign({userId:user._id,username:user.username,email:user.email},JWT_SECRET ,{expiresIn:'1h'})
     res.status(200).json({token:jwtToken, status:'Success'})
     // Find the user in the database by their email
     // If the user is not found, send an error response
