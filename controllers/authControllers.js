@@ -27,6 +27,17 @@ const signup = async (req, res, next) => {
     // Save the user to the database
     // Handle success and send a success response with user data
     // Handle errors and send an error response
+    const {username, email, password} = req.body;
+    if(!username || !email || !password)
+    {
+      res.status(400).json({ message: "Please provide all required information", status: "Error" })
+    }
+    const creatUser = new User({username, email, password}); // only creates the user locally , it doesn't save to db
+      await User.save(); // call pre-save hook and then save data to the db
+    return res.status(201).json({ message: "User created successfully",
+    status:"success",
+    data: {creatUser}
+  })
   } catch (err) {
     res.status(500).json({
       status: 'error',
@@ -40,7 +51,22 @@ const signup = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     // Extract user credentials from the request body (e.g., email, password)
+    const {email, password} = req.body;
     // Check if both email and password are provided; if not, send an error response
+    if(!email || !password){
+      return res.status(400).json({
+        status:"error",
+        message:"Please provide email and password"
+      })
+    }
+    const user = await User.findOne({email});
+    if(!user){
+      return res.status(401).json(
+        { message: "Invalid email or password", status: "Error", error: "Invalid Credentials" }
+      )
+    }
+    const jwtToken = jwt.sign({userId:user._id,username:user.username,email:user.email},JWT_SECRET,{expiresIn:'1h'})
+    res.status(200).json({token:jwtToken, status:'Success'})
     // Find the user in the database by their email
     // If the user is not found, send an error response
     // Compare the provided password with the stored password using bcrypt
